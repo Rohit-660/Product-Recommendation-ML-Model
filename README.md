@@ -1,115 +1,85 @@
-Recommendation System (Top Buys & Bought Together)
+# Recommendation System
 
 This project implements a product recommendation system using Django, Python, PostgreSQL, Redis, and Pickle.
 
-The system is designed to work efficiently on large datasets by avoiding repeated data crawling and running machine learning offline.
+The system trains models offline and serves recommendations using Redis for fast responses.
 
-What this system does
+## What this system does
 
-The system provides two types of recommendations:
+The system provides two types of recommendations.
 
-1. Top Buys
+Top Buys
+- Personalized recommendations for logged-in users
+- Global popular products for guest users
 
-  For logged-in users: personalized recommendations using their purchase history
+Bought Together
+- Same recommendations for all users
+- Products frequently purchased together
 
-  For guest users: global popular products
+## Algorithms used
 
-2. Bought Together
+ALS (Alternating Least Squares)
+- Used for personalized recommendations
+- Works with implicit feedback such as purchases
 
-  Same for all users
-  
-  Products frequently purchased together
-  
-  Ordered by strength (lift)
+Market Basket Optimization (FP-Growth)
+- Used for bought together recommendations
+- Finds products that appear together in orders
 
-Algorithms Used
-  ALS (Alternating Least Squares)
+## Technology stack
 
-    Used for personalized Top Buys
-    
-    Works with implicit feedback (purchases, not ratings)
-    
-    Learns hidden patterns between users and products
+- Django
+- Python
+- PostgreSQL
+- Redis
+- Pickle
 
-  Market Basket Optimization (FP-Growth)
+## How the system works
 
-    Used for Bought Together
+- Orders are stored in PostgreSQL
+- User-product interactions are updated incrementally
+- Models are trained offline
+- Trained models are saved using Pickle
+- Recommendation results are stored in Redis
+- APIs read data only from Redis
 
-    Finds products that appear together in orders
-    
-    Generates association rules based on support and lift
+## Project structure
 
-Tech Stack
+recommendations
+- api
+- services
+- management
+- data
 
-  Backend: Django
-  
-  Database: PostgreSQL
-  
-  Cache: Redis
-  
-  ML: Python
-  
-  Model storage: Pickle
-  
-  Algorithms: ALS, FP-Growth
+The data folder is created automatically by batch jobs.
 
-High Level Flow
+## How to run locally
 
-  Read order data from PostgreSQL
-  
-  Update user-product interactions incrementally
-  
-  Train ML models offline
-  
-  Save trained models as Pickle files
-  
-  Generate recommendations and store them in Redis
-  
-  APIs read data only from Redis
-  
-  No ML runs during API requests.
+Start Redis
 
-Required helper tables:
+redis-server
 
-batch_metadata
-- job_name
-- last_processed_at
+Run batch jobs
 
-user_product_interactions
-- user_id
-- product_id
-- interaction_score
-- last_updated_at
-
-These tables help avoid reprocessing all data.
-
-Redis Key Structure
-
-  user:{id}:top_buys → personalized recommendations
-  
-  global:top_buys → guest user recommendations
-  
-  product:{id}:bought_together → bought together products (sorted set)
-
-How to Run Locally
-  1. Start Redis
-    redis-server
-  
-  2. Run batch jobs (in order)
     python manage.py update_interactions
     python manage.py train_als_model
     python manage.py generate_top_buys
     python manage.py generate_global_top_buys
     python manage.py train_market_basket
     python manage.py generate_bought_together
-  
-  3. Start Django server
-    python manage.py runserver
 
-API Endpoints
+Start Django
+
+python manage.py runserver
+
+## API endpoints
 
 Top Buys
-  GET /api/recommendations/top-buys/?user_id=123
+> <ins>/api/recommendations/top-buys/?user_id=123</ins>
 
 Bought Together
-  GET /api/recommendations/bought-together/{product_id}/
+> <ins>/api/recommendations/bought-together/{product_id}/</ins>
+
+## Summary
+
+This system trains recommendation models offline, stores results in Redis, and serves fast APIs without recomputation.
