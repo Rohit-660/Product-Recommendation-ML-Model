@@ -1,173 +1,178 @@
-🧠 Product Recommendation System using Collaborative Filtering (ALS)
+Recommendation System (Top Buys & Bought Together)
 
-This project implements a Product Recommendation System using Collaborative Filtering based on the Alternating Least Squares (ALS) algorithm.
-It generates personalized product recommendations by learning from user–item interaction data (such as purchases or ratings).
+This project implements a product recommendation system using Django, Python, PostgreSQL, Redis, and Pickle.
 
-📌 Problem Statement
+The system is designed to work efficiently on large datasets by avoiding repeated data crawling and running machine learning offline.
 
-In an e-commerce platform, users interact with products in different ways (purchases, clicks, ratings).
-The goal of this project is to recommend relevant products to users based on patterns learned from historical interaction data.
+What this system does
 
-🚀 Solution Overview
+The system provides two types of recommendations:
 
-We use Item-Based Collaborative Filtering with ALS to:
+1. Top Buys
 
-Learn latent features of users and items
+For logged-in users: personalized recommendations using their purchase history
 
-Predict missing user–item interactions
+For guest users: global popular products
 
-Recommend top products for each user
+2. Bought Together
 
-The trained model and recommendation results are cached using Redis for fast retrieval.
+Same for all users
 
-🏗 Architecture
-User-Item Interactions
-        ↓
-Matrix Factorization (ALS)
-        ↓
-Latent User & Item Vectors
-        ↓
-Top-N Product Recommendations
-        ↓
-Stored in Redis Cache
+Products frequently purchased together
 
-🛠 Tech Stack
+Ordered by strength (lift)
 
-Python
+Algorithms Used
+ALS (Alternating Least Squares)
 
-ALS (Matrix Factorization)
+Used for personalized Top Buys
 
-NumPy / SciPy
+Works with implicit feedback (purchases, not ratings)
 
-Redis – caching recommendations
+Learns hidden patterns between users and products
 
-Pickle – model serialization
+Market Basket Optimization (FP-Growth)
 
-Django Management Command – scheduled generation
+Used for Bought Together
 
-📂 Project Structure
+Finds products that appear together in orders
+
+Generates association rules based on support and lift
+
+Tech Stack
+
+Backend: Django
+
+Database: PostgreSQL
+
+Cache: Redis
+
+ML: Python
+
+Model storage: Pickle
+
+Algorithms: ALS, FP-Growth
+
+High Level Flow
+
+Read order data from PostgreSQL
+
+Update user-product interactions incrementally
+
+Train ML models offline
+
+Save trained models as Pickle files
+
+Generate recommendations and store them in Redis
+
+APIs read data only from Redis
+
+No ML runs during API requests.
+
+Project Structure
 recommendations/
-│
-├── data/
-│   ├── als_model.pkl          # Trained ALS model
-│   ├── user_item_matrix.pkl  # Interaction matrix
-│
-├── management/
-│   └── commands/
-│       └── generate_top_buys.py
+├── api/
+│   └── views.py
 │
 ├── services/
-│   └── recommender.py
+│   ├── interaction_service.py
+│   ├── als_training_service.py
+│   ├── als_inference_service.py
+│   ├── global_popular_service.py
+│   ├── market_basket_service.py
+│   └── market_basket_inference_service.py
 │
-└── README.md
-
-📊 How the Model Works
-
-Input Data
-
-User ID
-
-Product ID
-
-Interaction value (purchase count / rating)
-
-Matrix Construction
-
-Rows → Users
-
-Columns → Products
-
-Values → Interaction strength
-
-ALS Training
-
-Factorizes matrix into:
-
-User latent vectors
-
-Item latent vectors
-
-Recommendation Generation
-
-Predicts scores for unseen products
-
-Selects Top-N products per user
-
-Caching
-
-Results stored in Redis for fast access
-
-▶ Running the Model
-1️⃣ Install Dependencies
-pip install -r requirements.txt
-
-2️⃣ Train the Model
-python train_als_model.py
+├── management/commands/
+│   ├── update_interactions.py
+│   ├── train_als_model.py
+│   ├── generate_top_buys.py
+│   ├── generate_global_top_buys.py
+│   ├── train_market_basket.py
+│   └── generate_bought_together.py
+│
+├── data/
+│   ├── als_model.pkl
+│   └── basket_rules.pkl
 
 
-This generates:
+Files inside data/ are created automatically by batch jobs.
+Do not create them manually.
 
-als_model.pkl
+Database Requirements
 
-user_item_matrix.pkl
+Existing tables:
 
-3️⃣ Generate Recommendations
+orders
+
+order_items
+
+Required helper tables:
+
+batch_metadata
+- job_name
+- last_processed_at
+
+user_product_interactions
+- user_id
+- product_id
+- interaction_score
+- last_updated_at
+
+
+These tables help avoid reprocessing all data.
+
+Redis Key Structure
+
+user:{id}:top_buys → personalized recommendations
+
+global:top_buys → guest user recommendations
+
+product:{id}:bought_together → bought together products (sorted set)
+
+How to Run Locally
+1. Start Redis
+redis-server
+
+2. Run batch jobs (in order)
+python manage.py update_interactions
+python manage.py train_als_model
 python manage.py generate_top_buys
+python manage.py generate_global_top_buys
+python manage.py train_market_basket
+python manage.py generate_bought_together
 
+3. Start Django server
+python manage.py runserver
 
-This command:
+API Endpoints
+Top Buys
 
-Loads the trained model
+GET /api/recommendations/top-buys/
 
-Generates top product recommendations
+GET /api/recommendations/top-buys/?user_id=123
 
-Stores them in Redis
+Bought Together
 
-🧪 Example Output
-{
-  "user_id": 101,
-  "recommended_products": [45, 78, 12, 90, 33]
-}
+GET /api/recommendations/bought-together/{product_id}/
 
-⚡ Why ALS?
+Why this design is used
 
-Scales well for large datasets
+Avoids full data scans
 
-Works efficiently with sparse matrices
+Scales with large datasets
 
-Widely used in real-world recommender systems
+Keeps APIs fast
 
-Handles implicit feedback (purchases, clicks)
+Separates ML from serving
 
-🔐 Caching Strategy
+Easy to debug and extend
 
-Redis stores:
+Important Notes
 
-User-wise recommendations
+Pickle files are not stored in Git
 
-Top-buy products
+Redis is the only source used by APIs
 
-Reduces repeated model inference
+ALS is used only for logged-in users
 
-Improves API response time
-
-📈 Future Improvements
-
-Add cold-start handling
-
-Switch to implicit ALS
-
-Add real-time feedback loop
-
-Expose recommendations via REST API
-
-Add evaluation metrics (RMSE, MAP@K)
-
-🧑‍💻 Author
-
-Rohit
-Software Engineer | Backend & ML Enthusiast
-
-⭐ If you like this project
-
-Give it a ⭐ on GitHub — it helps a lot!
+Market basket is shared across all users
