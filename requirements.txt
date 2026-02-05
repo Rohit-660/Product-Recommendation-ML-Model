@@ -1,0 +1,9 @@
+django
+psycopg2-binary
+pandas
+numpy
+scipy
+implicit
+mlxtend
+redis
+pyarrow
