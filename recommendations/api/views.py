@@ -24,7 +24,12 @@ def top_buys(request):
 
 
 def bought_together(request, product_id):
-    data = r.smembers(f"product:{product_id}:bought_together")
+    # Top 10 highest lift
+    data = r.zrevrange(
+        f"product:{product_id}:bought_together",
+        0,
+        9
+    )
 
     return JsonResponse({
         "type": "bought_together",
