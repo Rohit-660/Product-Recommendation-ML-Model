@@ -64,9 +64,8 @@ Run batch jobs
     python manage.py update_interactions
     python manage.py train_als_model
     python manage.py generate_top_buys
-    python manage.py generate_global_top_buys
     python manage.py train_market_basket
-    python manage.py generate_bought_together
+    python manage.py store_market_basket
 
 Start Django
 
