@@ -1,6 +1,6 @@
 from django.core.management.base import BaseCommand
-from recommendations.services.market_basket_service import (
-    store_bought_together_in_redis
+from recommendations.services.market_basket_trainer import (
+    train_market_basket
 )
 
 class Command(BaseCommand):
@@ -8,5 +8,5 @@ class Command(BaseCommand):
 
     def handle(self, *args, **kwargs):
         self.stdout.write("Training Market Basket model...")
-        store_bought_together_in_redis()
+        train_market_basket()
         self.stdout.write(self.style.SUCCESS("Market Basket model saved"))
