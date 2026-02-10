@@ -55,9 +55,47 @@ The data folder is created automatically by batch jobs.
 
 ## How to run locally
 
+Run following queries into your database
+
+    CREATE TABLE batch_metadata (
+      job_name TEXT PRIMARY KEY,
+      last_processed_at TIMESTAMP
+    );
+    
+    INSERT INTO batch_metadata
+    VALUES ('order_delta', '1970-01-01');
+
+    CREATE TABLE user_product_interactions (
+      user_id INT,
+      product_id INT,
+      interaction_score FLOAT,
+      last_updated_at TIMESTAMP,
+      PRIMARY KEY (user_id, product_id)
+    );
+
+Clone the project using folllowing command
+    
+    git clone https://github.com/Rohit-660/Product-Recommendation-ML-Model
+
+Update databse credentials in reco/settings.py
+
+Create Python Virtual Enviornment using folllowing command
+
+    python -m venv ml-env
+
+Activate it Enviornment using folllowing command
+
+    ..\ml-env\Scripts\Activate.ps1
+
+Install all the required packages
+
+    pip install -r requirements.txt
+    
 Start Redis
 
-redis-server
+Start Django
+
+    python manage.py runserver
 
 Run batch jobs
 
@@ -66,10 +104,6 @@ Run batch jobs
     python manage.py generate_top_buys
     python manage.py train_market_basket
     python manage.py store_market_basket
-
-Start Django
-
-python manage.py runserver
 
 ## API endpoints
 
